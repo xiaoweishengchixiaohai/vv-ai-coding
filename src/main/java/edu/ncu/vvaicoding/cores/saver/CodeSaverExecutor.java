@@ -12,11 +12,11 @@ public class CodeSaverExecutor {
 
     public static final HtmlCodeSaver singleFileCodeSaver = new HtmlCodeSaver();
 
-    public static File codeSave(Object codeResult, CodeGenTypeEnum codeGenTypeEnum) {
+    public static File codeSave(Object codeResult, CodeGenTypeEnum codeGenTypeEnum,Long appId) {
 
         return switch (codeGenTypeEnum) {
-            case HTML -> singleFileCodeSaver.saveFile((HtmlCodeResult) codeResult);
-            case MULTI_FILE -> multiFileCodeSaver.saveFile((MultiFileCodeResult) codeResult);
+            case HTML -> singleFileCodeSaver.saveFile((HtmlCodeResult) codeResult,appId);
+            case MULTI_FILE -> multiFileCodeSaver.saveFile((MultiFileCodeResult) codeResult,appId);
         };
     }
 }

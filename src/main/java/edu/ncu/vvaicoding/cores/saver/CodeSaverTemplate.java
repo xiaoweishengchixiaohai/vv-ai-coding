@@ -3,18 +3,20 @@ package edu.ncu.vvaicoding.cores.saver;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum;
+import edu.ncu.vvaicoding.constant.AppConstant;
 
 import java.io.File;
 
 public abstract class CodeSaverTemplate<T> {
 
-    public static final String FILE_SAVE_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_output";
+    // 文件保存根目录
+    protected static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
 
-    public final File saveFile(T codeResult) {
+    public final File saveFile(T codeResult,Long appId) {
         //参数校验
         validCodeResult(codeResult);
         //创建文件夹
-        String path = createDir();
+        String path = createDir(appId);
         //保存文件
         saveFile(path, codeResult);
 
@@ -25,9 +27,9 @@ public abstract class CodeSaverTemplate<T> {
         if (codeResult == null) throw new IllegalArgumentException("代码生成结果为空");
     }
 
-    private String createDir() {
+    private String createDir(Long appId) {
         String codeType = codeGenTypeEnum().getValue();
-        String path = FILE_SAVE_ROOT_DIR + "/" + codeType + "_" + IdUtil.getSnowflakeNextId();
+        String path = FILE_SAVE_ROOT_DIR + "/" + codeType + "_" + appId;
 
         FileUtil.mkdir(path);
 

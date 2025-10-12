@@ -19,7 +19,7 @@ class AICodeGenerateFacadeTest {
 
     @Test
     void generateCode() {
-        Flux<String> flux = aiCodeGenerateFacade.generateCode("生成一个简单的网页", CodeGenTypeEnum.HTML);
+        Flux<String> flux = aiCodeGenerateFacade.generateCode("生成一个简单的网页", CodeGenTypeEnum.HTML,1L);
         List<String> block = flux.collectList().block();
 
         assertNotNull(block);
