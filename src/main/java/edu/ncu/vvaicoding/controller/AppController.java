@@ -24,6 +24,7 @@ import edu.ncu.vvaicoding.domain.enums.UserRoleEnum;
 import edu.ncu.vvaicoding.exception.BusinessException;
 import edu.ncu.vvaicoding.exception.ErrorCode;
 import edu.ncu.vvaicoding.service.AppService;
+import edu.ncu.vvaicoding.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
@@ -42,6 +43,8 @@ public class AppController {
 
     @Resource
     private AppService appService;
+    @Resource
+    private UserService userService;
 
     /**
      * 创建应用
@@ -288,6 +291,14 @@ public class AppController {
         }
         long pageNum = appQueryRequest.getPageNum();
         long pageSize = appQueryRequest.getPageSize();
+        if (appQueryRequest.getUserAccount() != null) {
+            User user = userService.lambdaQuery().eq(User::getUserAccount, appQueryRequest.getUserAccount()).one();
+            if (user == null) {
+                return ResultUtils.success(new Page<>(pageNum, pageSize, 0));
+            }
+            appQueryRequest.setUserId(user.getId());
+        }
+
         QueryWrapper<App> queryWrapper = appService.getQueryWrapper(appQueryRequest);
         Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
         // 数据封装
@@ -349,7 +360,7 @@ public class AppController {
                     .data(jsonData).build();
         }).concatWith(
                 Mono.just(ServerSentEvent.<String>builder()
-                .event("done").
+                        .event("done").
                         data("").
                         build()));
     }
@@ -364,12 +375,12 @@ public class AppController {
     @PostMapping("/deploy")
     @SaCheckLogin
     public BaseResponse<String> deployApp(@RequestBody AppDeployRequest appDeployRequest, HttpServletRequest request) {
-        if(appDeployRequest == null || appDeployRequest.getAppId() == null) {
+        if (appDeployRequest == null || appDeployRequest.getAppId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用ID不能为空");
         }
         Long appId = appDeployRequest.getAppId();
         // 获取当前登录用户
-        UserVO user = (UserVO)StpUtil.getSession().get(UserConstant.USER_LOGIN_STATE);
+        UserVO user = (UserVO) StpUtil.getSession().get(UserConstant.USER_LOGIN_STATE);
         // 调用服务部署应用
         String deployUrl = appService.deployApp(appId, user);
         return ResultUtils.success(deployUrl);

@@ -1,5 +1,6 @@
 package edu.ncu.vvaicoding.cores;
 
+import edu.ncu.vvaicoding.ai.AIChatModelFactory;
 import edu.ncu.vvaicoding.ai.AICodeGenerateService;
 import edu.ncu.vvaicoding.ai.model.HtmlCodeResult;
 import edu.ncu.vvaicoding.ai.model.MultiFileCodeResult;
@@ -23,8 +24,7 @@ import static edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum.MULTI_FILE;
 public class AICodeGenerateFacade {
 
     @Resource
-    private AICodeGenerateService aICodeGenerateService;
-
+    private AIChatModelFactory aiChatModelFactory;
 
     public Flux<String> generateCode(String userManager, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         if (codeGenTypeEnum == null) throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成模式为空");
@@ -36,12 +36,14 @@ public class AICodeGenerateFacade {
     }
 
     private File generateHtmlCode(String userManager, Long appId) {
+        AICodeGenerateService aICodeGenerateService = aiChatModelFactory.getAICodeGenerateService(appId);
         HtmlCodeResult htmlCodeResult = aICodeGenerateService.generateHtmlCode(userManager);
 
         return CodeSaverExecutor.codeSave(htmlCodeResult, HTML, appId);
     }
 
     private File generateMultiFileCode(String userManager, Long appId) {
+        AICodeGenerateService aICodeGenerateService = aiChatModelFactory.getAICodeGenerateService(appId);
         MultiFileCodeResult multiFileCodeResult = aICodeGenerateService.generateMultiFileCode(userManager);
 
         return CodeSaverExecutor.codeSave(multiFileCodeResult, MULTI_FILE, appId);
@@ -55,6 +57,7 @@ public class AICodeGenerateFacade {
      * @return 保存的目录
      */
     private Flux<String> generateAndSaveHtmlCodeStream(String userMessage, Long appId) {
+        AICodeGenerateService aICodeGenerateService = aiChatModelFactory.getAICodeGenerateService(appId);
         Flux<String> result = aICodeGenerateService.generateHtmlStreamCode(userMessage);
         return generateCodeStream(result, HTML, appId);
     }
@@ -66,6 +69,7 @@ public class AICodeGenerateFacade {
      * @return 保存的目录
      */
     private Flux<String> generateAndSaveMultiFileCodeStream(String userMessage, Long appId) {
+        AICodeGenerateService aICodeGenerateService = aiChatModelFactory.getAICodeGenerateService(appId);
         Flux<String> result = aICodeGenerateService.generateMultiFileStreamCode(userMessage);
         return generateCodeStream(result, MULTI_FILE, appId);
     }
