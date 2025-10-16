@@ -22,12 +22,13 @@ public class COSUpload {
     @Resource
     private COSClientConfig cosClientConfig;
 
-    private final static String PREFIX = "avatar/";
+    private final static String AVATAR_PREFIX = "avatar/";
 
-    public PutObjectResult upload(File file) {
+    private final static String COVER_PREFIX = "cover/";
+
+    public PutObjectResult uploadAvatar(File file) {
         String type = FileUtil.getType(file);
-        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucketName(),
-                PREFIX + UUID.randomUUID() + "." + type, file);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucketName(), AVATAR_PREFIX + UUID.randomUUID() + "." + type, file);
 
         PicOperations picOperations = new PicOperations();
 
@@ -41,5 +42,25 @@ public class COSUpload {
         cosClient.deleteObject(cosClientConfig.getBucketName(), StrUtil.removePrefix(oldUrl, cosClientConfig.getHost() + "/"));
 
         return true;
+    }
+
+    public PutObjectResult uploadCover(String fileUrl) {
+        try {
+            File file = FileUtil.file(fileUrl);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(
+                    cosClientConfig.getBucketName(),
+                    COVER_PREFIX + UUID.randomUUID() + ".png",
+                    file);
+
+            PicOperations picOperations = new PicOperations();
+
+            picOperations.setIsPicInfo(1);
+            putObjectRequest.setPicOperations(picOperations);
+
+            return cosClient.putObject(putObjectRequest);
+        } finally {
+            FileUtil.del(fileUrl);
+        }
+
     }
 }

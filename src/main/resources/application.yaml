@@ -43,8 +43,6 @@ langchain4j:
   open-ai:
     chat-model:
       max-tokens: 8192
-      strict-json-schema: true
-      response-format: json_object
 
 
 

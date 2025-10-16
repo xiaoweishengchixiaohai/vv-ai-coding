@@ -1,6 +1,9 @@
 package edu.ncu.vvaicoding.ai;
 
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.UserMessage;
 import edu.ncu.vvaicoding.ai.model.HtmlCodeResult;
 import edu.ncu.vvaicoding.ai.model.MultiFileCodeResult;
 import reactor.core.publisher.Flux;
@@ -26,5 +29,14 @@ public interface AICodeGenerateService {
 
     @SystemMessage(fromResource = "prompt/multi-file-native-code.txt")
     Flux<String> generateMultiFileStreamCode(String userMessage);
+
+    /**
+     * 生成 Vue 项目代码（流式）
+     *
+     * @param userMessage 用户消息
+     * @return 生成过程的流式响应
+     */
+    @SystemMessage(fromResource = "prompt/vue-project-code.txt")
+    TokenStream generateVueProjectCodeStream(@MemoryId long appId, @UserMessage String userMessage);
 
 }

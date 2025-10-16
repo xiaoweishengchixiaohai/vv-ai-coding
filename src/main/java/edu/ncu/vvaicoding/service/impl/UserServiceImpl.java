@@ -30,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import static edu.ncu.vvaicoding.constant.UserConstant.*;
@@ -258,7 +257,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             multipartFile.transferTo(file);
             validAvatar(multipartFile, file);
 
-            PutObjectResult upload = cosUpload.upload(file);
+            PutObjectResult upload = cosUpload.uploadAvatar(file);
 
             if (upload == null) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件上传失败");

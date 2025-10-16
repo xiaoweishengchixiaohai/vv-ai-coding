@@ -4,11 +4,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum;
+import edu.ncu.vvaicoding.constant.AppConstant;
 import edu.ncu.vvaicoding.cores.AICodeGenerateFacade;
+import edu.ncu.vvaicoding.cores.builder.VueProjectBuilder;
+import edu.ncu.vvaicoding.cores.processor.StreamHandlerExecutor;
 import edu.ncu.vvaicoding.domain.VO.AppVO;
 import edu.ncu.vvaicoding.domain.VO.UserVO;
 import edu.ncu.vvaicoding.domain.dto.app.AppQueryRequest;
@@ -56,6 +58,17 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
+
+    @Resource
+    private WebScreenshotServiceImpl webScreenshotService;
+
+
 
 
     @Override
@@ -156,27 +169,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
             log.info("添加用户消息到对话历史失败");
         }
         // 6. 调用 AI 生成代码（流式）
-        Flux<String> contentFlux = aiCodeGenerateFacade.generateCode(message, codeGenTypeEnum, appId);
-        // 7. 收集AI响应内容并在完成后记录到对话历史
-        StringBuilder aiResponseBuilder = new StringBuilder();
-        return contentFlux
-                .map(chunk -> {
-                    // 收集AI响应内容
-                    aiResponseBuilder.append(chunk);
-                    return chunk;
-                })
-                .doOnComplete(() -> {
-                    // 流式响应完成后，添加AI消息到对话历史
-                    String aiResponse = aiResponseBuilder.toString();
-                    if (StrUtil.isNotBlank(aiResponse)) {
-                        chatHistoryService.addChatMessage(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), user.getId());
-                    }
-                })
-                .doOnError(error -> {
-                    // 如果AI回复失败，也要记录错误消息
-                    String errorMessage = "AI回复失败: " + error.getMessage();
-                    chatHistoryService.addChatMessage(appId, errorMessage, ChatHistoryMessageTypeEnum.AI.getValue(), user.getId());
-                });
+        Flux<String> flux = aiCodeGenerateFacade.generateCode(message, codeGenTypeEnum, appId);
+
+        return streamHandlerExecutor.process(codeGenTypeEnum, flux, appId, user);
+
     }
 
     @Override
@@ -212,6 +208,22 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
         String sourcePath = CODE_OUTPUT_ROOT_DIR + "/" + app.getCodeGenType() + "_" + appId;
 
+        CodeGenTypeEnum typeEnum = CodeGenTypeEnum.getEnumByValue(app.getCodeGenType());
+        if (typeEnum == null) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型");
+        }
+
+        if (typeEnum == CodeGenTypeEnum.VUE_PROJECT) {
+            // 异步构造 Vue 项目
+            String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+            boolean result = vueProjectBuilder.buildProject(projectPath);
+            if (!result) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败");
+            }
+
+            sourcePath = projectPath + "/dist";
+        }
+
         File sourceFile = new File(sourcePath);
         if (!sourceFile.exists() || !sourceFile.isDirectory()) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "代码不存在");
@@ -223,15 +235,38 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败");
         }
 
-
         App newApp = new App();
 
         newApp.setId(appId);
         newApp.setDeployKey(deployKey);
         this.updateById(newApp);
+        String deployUrl = CODE_DEPLOY_HOST + "/" + app.getCodeGenType() + "_" + deployKey;
+        generateAppScreenshotAsync(appId, deployUrl);
 
-        return CODE_DEPLOY_HOST + "/" + app.getCodeGenType() + "_" + deployKey;
+        return deployUrl;
     }
+
+    /**
+     * 异步生成应用截图并更新封面
+     *
+     * @param appId  应用ID
+     * @param appUrl 应用访问URL
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        // 使用虚拟线程异步执行
+        Thread.startVirtualThread(() -> {
+            // 调用截图服务生成截图并上传
+            String screenshotUrl = webScreenshotService.takeScreenshot(appUrl);
+            // 更新应用封面字段
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setCover(screenshotUrl);
+            boolean updated = this.updateById(updateApp);
+            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+        });
+    }
+
 
     /**
      * 删除应用时关联删除对话历史
@@ -262,7 +297,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         // 删除应用
         return super.removeById(id);
     }
-
 
 }
 

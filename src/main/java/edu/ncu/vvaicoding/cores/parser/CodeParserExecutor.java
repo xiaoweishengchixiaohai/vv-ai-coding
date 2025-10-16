@@ -15,6 +15,7 @@ public class CodeParserExecutor {
         return switch (codeGenTypeEnum) {
             case HTML -> htmlParser.parseCode(codeContent);
             case MULTI_FILE -> multiParser.parseCode(codeContent);
+            default -> throw new IllegalArgumentException("不支持的生成类型");
         };
     }
 }
