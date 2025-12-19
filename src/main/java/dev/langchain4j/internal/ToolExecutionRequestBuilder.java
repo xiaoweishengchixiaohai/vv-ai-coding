@@ -11,8 +11,6 @@ import static dev.langchain4j.internal.Utils.isNotNullOrBlank;
 import static dev.langchain4j.internal.Utils.isNotNullOrEmpty;
 
 @Internal
-// TODO location
-// TODO name
 public class ToolExecutionRequestBuilder {
 
     private final AtomicReference<Integer> index;

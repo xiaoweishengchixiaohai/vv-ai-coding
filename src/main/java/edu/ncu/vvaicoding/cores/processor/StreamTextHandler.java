@@ -1,7 +1,6 @@
 package edu.ncu.vvaicoding.cores.processor;
 
 import edu.ncu.vvaicoding.domain.VO.UserVO;
-import edu.ncu.vvaicoding.domain.enetity.User;
 import edu.ncu.vvaicoding.domain.enums.ChatHistoryMessageTypeEnum;
 import edu.ncu.vvaicoding.service.ChatHistoryService;
 import lombok.extern.slf4j.Slf4j;

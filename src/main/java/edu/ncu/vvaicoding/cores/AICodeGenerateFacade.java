@@ -6,12 +6,14 @@ import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.tool.ToolExecution;
 import edu.ncu.vvaicoding.ai.AIChatModelFactory;
 import edu.ncu.vvaicoding.ai.AICodeGenerateService;
+import edu.ncu.vvaicoding.ai.QuestionService;
 import edu.ncu.vvaicoding.ai.model.HtmlCodeResult;
 import edu.ncu.vvaicoding.ai.model.MultiFileCodeResult;
 import edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum;
 import edu.ncu.vvaicoding.ai.model.message.AiResponseMessage;
 import edu.ncu.vvaicoding.ai.model.message.ToolExecutedMessage;
 import edu.ncu.vvaicoding.ai.model.message.ToolRequestMessage;
+import edu.ncu.vvaicoding.ai.tools.ReaderFileTool;
 import edu.ncu.vvaicoding.cores.parser.CodeParserExecutor;
 import edu.ncu.vvaicoding.cores.processor.StreamHandlerExecutor;
 import edu.ncu.vvaicoding.cores.processor.StreamTextHandler;
@@ -20,6 +22,7 @@ import edu.ncu.vvaicoding.exception.BusinessException;
 import edu.ncu.vvaicoding.exception.ErrorCode;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -33,6 +36,10 @@ public class AICodeGenerateFacade {
 
     @Resource
     private AIChatModelFactory aiChatModelFactory;
+
+    @Resource
+    private QuestionService questionService;
+
 
     public Flux<String> generateCode(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         if (codeGenTypeEnum == null) throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成模式为空");

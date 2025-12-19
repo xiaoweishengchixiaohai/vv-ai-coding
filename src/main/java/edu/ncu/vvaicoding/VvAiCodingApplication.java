@@ -7,7 +7,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @EnableAspectJAutoProxy(exposeProxy = true)
 @SpringBootApplication(exclude = {RedisEmbeddingStoreAutoConfiguration.class})
-public class VvAiCodingApplication {
+public class  VvAiCodingApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(VvAiCodingApplication.class, args);

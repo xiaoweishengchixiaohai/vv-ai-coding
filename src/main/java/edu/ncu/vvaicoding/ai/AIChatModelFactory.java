@@ -7,9 +7,11 @@ import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum;
 import edu.ncu.vvaicoding.ai.tools.FileWriteTool;
+import edu.ncu.vvaicoding.ai.tools.ToolManager;
 import edu.ncu.vvaicoding.exception.BusinessException;
 import edu.ncu.vvaicoding.exception.ErrorCode;
 import edu.ncu.vvaicoding.service.ChatHistoryService;
@@ -19,6 +21,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+
+import static org.apache.coyote.http11.Constants.QUESTION;
 
 @Configuration
 @Slf4j
@@ -38,6 +42,12 @@ public class AIChatModelFactory {
 
     @Resource
     private StreamingChatModel reasoningStreamingChatModel;
+
+    @Resource
+    private ToolManager toolManager;
+
+    @Resource
+    private ContentRetriever contentRetriever;
     /**
      * AI 服务实例缓存
      * 缓存策略：
@@ -54,6 +64,15 @@ public class AIChatModelFactory {
             })
             .build();
 
+    @Bean
+    public QuestionService questionService() {
+        return AiServices.
+                builder(QuestionService.class)
+                .chatModel(chatModel)
+                .streamingChatModel(openAiStreamingChatModel)
+                .contentRetriever(contentRetriever)
+                .build();
+    }
 
     @Bean
     public AICodeTypeService aiCodeTypeService() {
@@ -111,7 +130,7 @@ public class AIChatModelFactory {
                     chatModel(chatModel).
                     chatMemoryProvider(appId -> chatMemory).
                     streamingChatModel(reasoningStreamingChatModel).
-                    tools(new FileWriteTool()).
+                    tools((Object) toolManager.getAllTools()).
                     hallucinatedToolNameStrategy(toolExecutionRequest ->
                             ToolExecutionResultMessage.from(toolExecutionRequest,
                                     "Error: there is no tool called" + toolExecutionRequest.name())).

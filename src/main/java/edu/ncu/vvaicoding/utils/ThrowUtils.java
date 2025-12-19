@@ -3,6 +3,9 @@ package edu.ncu.vvaicoding.utils;
 import edu.ncu.vvaicoding.exception.BusinessException;
 import edu.ncu.vvaicoding.exception.ErrorCode;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ThrowUtils {
     public static void throwIf(boolean error, ErrorCode errorCode, String message) {
         if (error) {
@@ -14,4 +17,5 @@ public class ThrowUtils {
             throw new BusinessException(errorCode);
         }
     }
+
 }

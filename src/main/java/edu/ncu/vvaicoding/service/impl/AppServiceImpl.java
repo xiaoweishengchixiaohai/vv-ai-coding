@@ -4,8 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import edu.ncu.vvaicoding.ai.QuestionService;
 import edu.ncu.vvaicoding.ai.model.enums.CodeGenTypeEnum;
 import edu.ncu.vvaicoding.constant.AppConstant;
 import edu.ncu.vvaicoding.cores.AICodeGenerateFacade;
@@ -68,8 +70,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     @Resource
     private WebScreenshotServiceImpl webScreenshotService;
 
-
-
+    @Resource
+    private QuestionService questionService;
 
     @Override
     public AppVO getAppVO(App app) {
@@ -299,7 +301,3 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     }
 
 }
-
-
-
-
